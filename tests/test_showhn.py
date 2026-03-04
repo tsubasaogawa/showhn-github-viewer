@@ -191,22 +191,32 @@ class TestCLI:
 
     def test_default_run(self):
         runner = CliRunner()
-        with patch("showhn.fetch_stories", return_value=self._fake_data()):
+        fake_data = self._fake_data()
+        with patch("showhn.fetch_stories", return_value=fake_data), patch(
+            "showhn.run_tui"
+        ) as mock_tui:
             result = runner.invoke(main, [])
         assert result.exit_code == 0
-        assert "Show HN: TestRepo" in result.output
+        mock_tui.assert_called_once_with(initial_page=0, initial_data=fake_data)
 
     def test_page_option(self):
         runner = CliRunner()
-        with patch("showhn.fetch_stories", return_value=self._fake_data()) as mock_fetch:
+        fake_data = self._fake_data()
+        with patch("showhn.fetch_stories", return_value=fake_data) as mock_fetch, patch(
+            "showhn.run_tui"
+        ) as mock_tui:
             runner.invoke(main, ["--page", "3"])
             mock_fetch.assert_called_once_with(page=3)
+            mock_tui.assert_called_once_with(initial_page=3, initial_data=fake_data)
 
     def test_no_results(self):
         runner = CliRunner()
-        with patch("showhn.fetch_stories", return_value={"hits": [], "nbPages": 0}):
+        with patch("showhn.fetch_stories", return_value={"hits": [], "nbPages": 0}), patch(
+            "showhn.run_tui"
+        ) as mock_tui:
             result = runner.invoke(main, [])
         assert result.exit_code == 0
+        mock_tui.assert_not_called()
 
     def test_request_error(self):
         runner = CliRunner()
