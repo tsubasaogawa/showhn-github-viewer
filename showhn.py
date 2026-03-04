@@ -89,19 +89,11 @@ def build_page_content(hits: list, page: int, num_pages: int) -> str:
     show_default=True,
     help="Page number (0-indexed).",
 )
-@click.option(
-    "--all-pages",
-    "-a",
-    is_flag=True,
-    default=False,
-    help="Interactively page through all results.",
-)
-def main(page: int, all_pages: bool) -> None:
+def main(page: int) -> None:
     """Browse Show HN posts that feature GitHub repositories.
 
     Results are fetched from hn.algolia.com and displayed in a pager.
-    Use --page / -p to jump to a specific page, or --all-pages / -a to
-    interactively browse through pages one by one.
+    Use --page / -p to jump to a specific page.
     """
     current_page = page
 
@@ -123,15 +115,7 @@ def main(page: int, all_pages: bool) -> None:
         content = build_page_content(hits, current_page, num_pages)
         click.echo_via_pager(content)
 
-        if all_pages and current_page + 1 < num_pages:
-            try:
-                if not click.confirm(f"Show page {current_page + 2}?", default=True):
-                    break
-            except click.Abort:
-                break
-            current_page += 1
-        else:
-            break
+        break
 
 
 if __name__ == "__main__":

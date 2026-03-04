@@ -44,7 +44,6 @@ showhn [OPTIONS]
 
 Options:
   -p, --page INTEGER   Page number to display (0-indexed, default: 0)
-  -a, --all-pages      Interactively browse through all pages one by one
   --help               Show this message and exit
 ```
 
@@ -57,8 +56,6 @@ showhn
 # Jump straight to page 3
 showhn --page 2
 
-# Interactively page through all results
-showhn --all-pages
 ```
 
 ### Display
