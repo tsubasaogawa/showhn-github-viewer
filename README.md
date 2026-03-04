@@ -3,7 +3,7 @@
 A command-line tool for browsing **Show HN** posts that feature GitHub
 repositories.  
 Results are fetched from the [HN Algolia API](https://hn.algolia.com/api) and
-displayed in a pager (like `less`).
+displayed in an interactive TUI.
 
 ---
 
@@ -43,7 +43,7 @@ python showhn.py
 showhn [OPTIONS]
 
 Options:
-  -p, --page INTEGER   Page number to display (0-indexed, default: 0)
+  -p, --page INTEGER   Initial page number (0-indexed, default: 0)
   --help               Show this message and exit
 ```
 
@@ -68,8 +68,13 @@ Each result shows:
      Points: 312 | 3 hours ago
 ```
 
-Results are displayed in your system pager (`$PAGER` or `less`).  
-Press `q` to quit the pager.
+Results are displayed in an interactive terminal UI.
+
+- `↑` / `k`: move selection up
+- `↓` / `j`: move selection down
+- `n` / `→`: next page
+- `p` / `←`: previous page
+- `q`: quit
 
 ---
 
