@@ -10,13 +10,25 @@ displayed in a pager (like `less`).
 ## Requirements
 
 - Python 3.9+
-- `pip`
+- `pip` or [`uv`](https://docs.astral.sh/uv/)
 
 ## Installation
 
+### Using uvx (recommended – no install needed)
+
+```bash
+# Run directly from the repository
+uvx --from . showhn-github-viewer
+
+# Once published to PyPI
+uvx showhn-github-viewer
+```
+
+### Using pip
+
 ```bash
 pip install -r requirements.txt
-pip install -e .          # installs the `showhn` command
+pip install -e .          # installs the `showhn` / `showhn-github-viewer` commands
 ```
 
 Or run directly without installing:

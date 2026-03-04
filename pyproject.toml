@@ -16,6 +16,7 @@ dependencies = [
 
 [project.scripts]
 showhn = "showhn:main"
+showhn-github-viewer = "showhn:main"
 
 [tool.setuptools]
 py-modules = ["showhn"]
