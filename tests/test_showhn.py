@@ -154,8 +154,10 @@ class TestFetchStories:
         with patch("showhn.requests.get") as mock_get:
             mock_get.return_value = self._mock_response({"hits": [], "nbPages": 0})
             fetch_stories(page=2)
+            url = mock_get.call_args[0][0]
             _, kwargs = mock_get.call_args
             params = kwargs.get("params") or mock_get.call_args[0][1]
+            assert url == showhn.API_URL
             assert params["query"] == "show hn github"
             assert params["page"] == 2
             assert params["tags"] == "story"

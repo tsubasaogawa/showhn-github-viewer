@@ -7,7 +7,7 @@ import time
 import click
 import requests
 
-API_URL = "https://hn.algolia.com/api/v1/search"
+API_URL = "https://hn.algolia.com/api/v1/search_by_date"
 HITS_PER_PAGE = 20
 
 
