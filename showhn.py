@@ -107,27 +107,43 @@ def draw_tui(stdscr, hits: list, selected_idx: int, page: int, num_pages: int) -
     stdscr.erase()
     height, width = stdscr.getmaxyx()
 
+    if height < 3 or width < 10:
+        return
+
     header = (
         f"Show HN GitHub Viewer [Page {page + 1}/{num_pages}] "
         "↑/k ↓/j: move  n/p: page  q: quit"
     )
-    _safe_addnstr(stdscr, 0, 0, header, width - 1)
+    # Pad header to full width with reverse attribute
+    header_padded = header.ljust(width - 1)[: width - 1]
+    _safe_addnstr(stdscr, 0, 0, header_padded, width - 1, curses.A_REVERSE)
 
-    list_height = max(1, height - 3)
+    # Use all available middle space for the list
+    list_height = height - 2
     start_idx = 0
     if selected_idx >= list_height:
         start_idx = selected_idx - list_height + 1
 
     end_idx = min(len(hits), start_idx + list_height)
-    for row, i in enumerate(range(start_idx, end_idx), start=1):
+    for row_offset, i in enumerate(range(start_idx, end_idx)):
         story = hits[i]
         line = format_story_line(page * HITS_PER_PAGE + i + 1, story)
         attr = curses.A_REVERSE if i == selected_idx else curses.A_NORMAL
-        _safe_addnstr(stdscr, row, 0, line, width - 1, attr)
 
+        # Pad selected line to full width
+        if i == selected_idx:
+            line_to_draw = line.ljust(width - 1)[: width - 1]
+        else:
+            line_to_draw = line[: width - 1]
+
+        _safe_addnstr(stdscr, row_offset + 1, 0, line_to_draw, width - 1, attr)
+
+    # Footer at the very bottom
     selected_story = hits[selected_idx]
     selected_url = selected_story.get("url") or "(no URL)"
-    _safe_addnstr(stdscr, height - 1, 0, f"URL: {selected_url}", width - 1)
+    footer = f"URL: {selected_url}"
+    footer_padded = footer.ljust(width - 1)[: width - 1]
+    _safe_addnstr(stdscr, height - 1, 0, footer_padded, width - 1, curses.A_REVERSE)
 
     stdscr.refresh()
 
@@ -158,6 +174,8 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
 
             if key in (ord("q"),):
                 return
+            if key == curses.KEY_RESIZE:
+                continue
             if key in (curses.KEY_UP, ord("k")) and selected_idx > 0:
                 selected_idx -= 1
                 continue
