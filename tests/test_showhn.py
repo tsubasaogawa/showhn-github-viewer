@@ -1,8 +1,12 @@
 """Tests for showhn.py."""
-
-import time
+import sys
 from unittest.mock import MagicMock, patch
 
+# Mock curses before showhn is imported
+mock_curses = MagicMock()
+sys.modules["curses"] = mock_curses
+
+import time
 import pytest
 from click.testing import CliRunner
 
@@ -226,3 +230,35 @@ class TestCLI:
         ):
             result = runner.invoke(main, [])
         assert result.exit_code != 0
+
+
+# ---------------------------------------------------------------------------
+# TUI Drawing
+# ---------------------------------------------------------------------------
+
+class TestTUIDrawing:
+    def test_draw_tui_uses_full_height(self, mocker):
+        from showhn import draw_tui
+        stdscr = MagicMock()
+        # Mock window size 10x40
+        stdscr.getmaxyx.return_value = (10, 40)
+        
+        hits = [{"title": f"Story {i}"} for i in range(20)]
+        
+        # We need to mock _safe_addnstr because it uses curses constants
+        with patch("showhn._safe_addnstr") as mock_addnstr:
+            draw_tui(stdscr, hits, selected_idx=0, page=0, num_pages=1)
+            
+            # Header at 0, Footer at height-1 (9)
+            # List items should be drawn from row 1 to 8
+            # Total 8 rows for list items
+            list_calls = [c for c in mock_addnstr.call_args_list if 1 <= c.args[1] <= 8]
+            assert len(list_calls) == 8
+            
+            # Verify padding for selected item
+            # The first item (idx 0) is selected
+            selected_call = [c for c in list_calls if c.args[1] == 1][0]
+            drawn_text = selected_call.args[3]
+            assert len(drawn_text) == 39  # width - 1
+            assert drawn_text.startswith("  1. Story 0")
+            assert drawn_text.endswith(" ")
