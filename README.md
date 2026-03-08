@@ -7,6 +7,15 @@ displayed in an interactive TUI.
 
 ---
 
+## Features
+
+- **GitHub Focused**: Automatically filters Show HN posts to show only those with GitHub repository links.
+- **Interactive TUI**: Browse posts with a clean terminal interface.
+- **README Preview**: Press `Enter` to open a vertical split-pane showing the repository's `README.md` directly in your terminal.
+- **Relative Time**: Displays how long ago projects were posted.
+
+---
+
 ## Usage
 
 ```bash
@@ -38,23 +47,19 @@ showhn
 showhn --page 2
 ```
 
-### Display
+### Controls
 
-Each result shows:
+#### Navigation
+- `↑` / `k`: Move selection up (or scroll README up if open)
+- `↓` / `j`: Move selection down (or scroll README down if open)
+- `n` / `→`: Next page
+- `p` / `←`: Previous page
+- `q`: Quit
 
-```
-  1. Show HN: My Awesome Project
-     URL:    https://github.com/user/my-awesome-project
-     Points: 312 | 3 hours ago
-```
-
-Results are displayed in an interactive terminal UI.
-
-- `↑` / `k`: move selection up
-- `↓` / `j`: move selection down
-- `n` / `→`: next page
-- `p` / `←`: previous page
-- `q`: quit
+#### README Pane
+- `Enter`: Toggle README preview pane for the selected project
+- `u` / `d`: Scroll README up/down by half a page
+- `PgUp` / `PgDn`: Scroll README up/down by a full page
 
 ---
 
@@ -69,4 +74,4 @@ The standard search at
 [hn.algolia.com](https://hn.algolia.com/?dateRange=all&page=0&prefix=true&query=show%20hn%20github&sort=byDate&type=story)
 works but is inconvenient to browse.  
 This tool focuses solely on GitHub Show HN posts and provides a clean,
-paginated terminal interface.
+paginated terminal interface with instant project previews.
