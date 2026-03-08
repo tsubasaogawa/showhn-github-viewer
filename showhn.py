@@ -5,12 +5,24 @@ import curses
 import sys
 import time
 from typing import Optional
+from urllib.parse import urlparse
 
 import click
 import requests
 
 API_URL = "https://hn.algolia.com/api/v1/search_by_date"
 HITS_PER_PAGE = 20
+
+
+def is_github_url(url: Optional[str]) -> bool:
+    """Check if the URL belongs to github.com."""
+    if not url:
+        return False
+    try:
+        parsed = urlparse(url)
+        return parsed.netloc == "github.com"
+    except Exception:
+        return False
 
 
 def fetch_stories(page: int = 0) -> dict:
@@ -153,6 +165,8 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
 
     def _parse(data: dict) -> tuple[list, int]:
         hits = data.get("hits", [])
+        # Filter only GitHub URLs
+        hits = [h for h in hits if is_github_url(h.get("url"))]
         num_pages = data.get("nbPages", 1) or 1
         return hits, max(1, int(num_pages))
 
@@ -218,6 +232,10 @@ def main(page: int) -> None:
         sys.exit(1)
 
     hits = data.get("hits", [])
+    # Filter only GitHub URLs
+    hits = [h for h in hits if is_github_url(h.get("url"))]
+    data["hits"] = hits
+
     if not hits:
         click.echo("No results found.", err=True)
         return

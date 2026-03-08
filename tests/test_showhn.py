@@ -16,8 +16,37 @@ from showhn import (
     fetch_stories,
     format_story,
     format_time_ago,
+    is_github_url,
     main,
 )
+
+
+# ---------------------------------------------------------------------------
+# is_github_url
+# ---------------------------------------------------------------------------
+
+class TestIsGitHubUrl:
+    def test_github_https(self):
+        assert is_github_url("https://github.com/user/repo") is True
+
+    def test_github_http(self):
+        assert is_github_url("http://github.com/user/repo") is True
+
+    def test_github_no_path(self):
+        assert is_github_url("https://github.com") is True
+
+    def test_not_github(self):
+        assert is_github_url("https://gitlab.com/user/repo") is False
+
+    def test_none(self):
+        assert is_github_url(None) is False
+
+    def test_empty(self):
+        assert is_github_url("") is False
+
+    def test_invalid_url(self):
+        # urlparse might handle this weirdly but it shouldn't be github.com
+        assert is_github_url("not a url") is False
 
 
 # ---------------------------------------------------------------------------
@@ -221,6 +250,30 @@ class TestCLI:
             result = runner.invoke(main, [])
         assert result.exit_code == 0
         mock_tui.assert_not_called()
+
+    def test_filtering_non_github_urls(self):
+        runner = CliRunner()
+        fake_data = {
+            "hits": [
+                {"title": "GitHub", "url": "https://github.com/a/b"},
+                {"title": "Not GitHub", "url": "https://example.com"},
+            ],
+            "nbPages": 1,
+        }
+        filtered_data = {
+            "hits": [{"title": "GitHub", "url": "https://github.com/a/b"}],
+            "nbPages": 1,
+        }
+        with patch("showhn.fetch_stories", return_value=fake_data), patch(
+            "showhn.run_tui"
+        ) as mock_tui:
+            runner.invoke(main, [])
+        
+        # Verify run_tui called with filtered hits
+        # Note: we need to check the call args correctly
+        _, kwargs = mock_tui.call_args
+        assert len(kwargs["initial_data"]["hits"]) == 1
+        assert kwargs["initial_data"]["hits"][0]["title"] == "GitHub"
 
     def test_request_error(self):
         runner = CliRunner()
