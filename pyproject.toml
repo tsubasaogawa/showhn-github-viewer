@@ -15,11 +15,11 @@ dependencies = [
 ]
 
 [project.scripts]
-showhn = "showhn:main"
-showhn-github-viewer = "showhn:main"
+showhn = "src:main"
+showhn-github-viewer = "src:main"
 
 [tool.setuptools]
-py-modules = ["showhn"]
+packages = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

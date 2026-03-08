@@ -16,10 +16,10 @@ uv sync
 
 ```bash
 # Run the TUI
-uv run showhn.py
+uv run showhn
 
 # Run starting from a specific page
-uv run showhn.py --page 1
+uv run showhn --page 1
 ```
 
 ## Testing
@@ -34,6 +34,6 @@ uv run pytest -v
 
 ## Project Structure
 
-- `showhn.py`: Main application logic and TUI implementation.
+ - `src/`: Main application logic and TUI implementation.
 - `tests/`: Project test suite.
 - `pyproject.toml`: Project metadata and dependencies.

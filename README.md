@@ -26,7 +26,7 @@ uvx --from . showhn-github-viewer
 Or run the script directly:
 
 ```bash
-uv run showhn.py [OPTIONS]
+uv run showhn [OPTIONS]
 ```
 
 ### Options
