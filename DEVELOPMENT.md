@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.9+
 - [uv](https://github.com/astral-sh/uv) (recommended for dependency management)
 
 ## Setup
