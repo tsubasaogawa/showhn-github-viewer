@@ -7,41 +7,22 @@ displayed in an interactive TUI.
 
 ---
 
-## Requirements
-
-- Python 3.9+
-- `pip` or [`uv`](https://docs.astral.sh/uv/)
-
-## Installation
-
-### Using uvx (recommended – no install needed)
-
-```bash
-# Run directly from the repository
-uvx --from . showhn-github-viewer
-
-# Once published to PyPI
-uvx showhn-github-viewer
-```
-
-### Using pip
-
-```bash
-pip install -r requirements.txt
-pip install -e .          # installs the `showhn` / `showhn-github-viewer` commands
-```
-
-Or run directly without installing:
-
-```bash
-python showhn.py
-```
-
 ## Usage
 
+```bash
+# Run directly using uvx (recommended)
+uvx --from . showhn-github-viewer
 ```
-showhn [OPTIONS]
 
+Or run the script directly:
+
+```bash
+python showhn.py [OPTIONS]
+```
+
+### Options
+
+```
 Options:
   -p, --page INTEGER   Initial page number (0-indexed, default: 0)
   --help               Show this message and exit
@@ -50,12 +31,11 @@ Options:
 ### Examples
 
 ```bash
-# View the latest 20 Show HN GitHub posts (page 1)
+# View the latest 20 Show HN GitHub posts
 showhn
 
 # Jump straight to page 3
 showhn --page 2
-
 ```
 
 ### Display
@@ -78,12 +58,9 @@ Results are displayed in an interactive terminal UI.
 
 ---
 
-## Running Tests
+## Development
 
-```bash
-pip install pytest
-pytest
-```
+See [DEVELOPMENT.md](DEVELOPMENT.md) for information on setting up the development environment, running tests, and project structure.
 
 ## Background
 
