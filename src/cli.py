@@ -20,7 +20,7 @@ def main(page: int) -> None:
     Results are fetched from hn.algolia.com and displayed in a TUI.
     Use --page / -p to choose the initial page.
     """
-    import showhn as package
+    import src as package
 
     try:
         data = package.fetch_stories(page=page)

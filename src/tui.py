@@ -28,7 +28,7 @@ def draw_tui(
     readme_scroll: int = 0,
 ) -> None:
     """Draw the TUI list view."""
-    import showhn as package
+    import src as package
 
     stdscr.erase()
     height, width = stdscr.getmaxyx()

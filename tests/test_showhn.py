@@ -1,8 +1,8 @@
-"""Tests for showhn.py."""
+"""Tests for src package."""
 import sys
 from unittest.mock import MagicMock, patch
 
-# Mock curses before showhn is imported
+# Mock curses before src is imported
 mock_curses = MagicMock()
 sys.modules["curses"] = mock_curses
 
@@ -10,8 +10,8 @@ import time
 import pytest
 from click.testing import CliRunner
 
-import showhn
-from showhn import (
+import src
+from src import (
     build_page_content,
     fetch_stories,
     format_story,
@@ -184,20 +184,20 @@ class TestFetchStories:
         return mock_resp
 
     def test_correct_query_params(self):
-        with patch("showhn.requests.get") as mock_get:
+        with patch("src.requests.get") as mock_get:
             mock_get.return_value = self._mock_response({"hits": [], "nbPages": 0})
             fetch_stories(page=2)
             url = mock_get.call_args[0][0]
             _, kwargs = mock_get.call_args
             params = kwargs.get("params") or mock_get.call_args[0][1]
-            assert url == showhn.API_URL
+            assert url == src.API_URL
             assert params["query"] == "show hn github"
             assert params["page"] == 2
             assert params["tags"] == "story"
 
     def test_returns_json(self):
         payload = {"hits": [{"title": "test"}], "nbPages": 1}
-        with patch("showhn.requests.get") as mock_get:
+        with patch("src.requests.get") as mock_get:
             mock_get.return_value = self._mock_response(payload)
             result = fetch_stories()
             assert result == payload
@@ -225,8 +225,8 @@ class TestCLI:
     def test_default_run(self):
         runner = CliRunner()
         fake_data = self._fake_data()
-        with patch("showhn.fetch_stories", return_value=fake_data), patch(
-            "showhn.run_tui"
+        with patch("src.fetch_stories", return_value=fake_data), patch(
+            "src.run_tui"
         ) as mock_tui:
             result = runner.invoke(main, [])
         assert result.exit_code == 0
@@ -235,8 +235,8 @@ class TestCLI:
     def test_page_option(self):
         runner = CliRunner()
         fake_data = self._fake_data()
-        with patch("showhn.fetch_stories", return_value=fake_data) as mock_fetch, patch(
-            "showhn.run_tui"
+        with patch("src.fetch_stories", return_value=fake_data) as mock_fetch, patch(
+            "src.run_tui"
         ) as mock_tui:
             runner.invoke(main, ["--page", "3"])
             mock_fetch.assert_called_once_with(page=3)
@@ -244,8 +244,8 @@ class TestCLI:
 
     def test_no_results(self):
         runner = CliRunner()
-        with patch("showhn.fetch_stories", return_value={"hits": [], "nbPages": 0}), patch(
-            "showhn.run_tui"
+        with patch("src.fetch_stories", return_value={"hits": [], "nbPages": 0}), patch(
+            "src.run_tui"
         ) as mock_tui:
             result = runner.invoke(main, [])
         assert result.exit_code == 0
@@ -264,8 +264,8 @@ class TestCLI:
             "hits": [{"title": "GitHub", "url": "https://github.com/a/b"}],
             "nbPages": 1,
         }
-        with patch("showhn.fetch_stories", return_value=fake_data), patch(
-            "showhn.run_tui"
+        with patch("src.fetch_stories", return_value=fake_data), patch(
+            "src.run_tui"
         ) as mock_tui:
             runner.invoke(main, [])
         
@@ -278,8 +278,8 @@ class TestCLI:
     def test_request_error(self):
         runner = CliRunner()
         with patch(
-            "showhn.fetch_stories",
-            side_effect=showhn.requests.RequestException("timeout"),
+            "src.fetch_stories",
+            side_effect=src.requests.RequestException("timeout"),
         ):
             result = runner.invoke(main, [])
         assert result.exit_code != 0
@@ -291,7 +291,7 @@ class TestCLI:
 
 class TestTUIDrawing:
     def test_draw_tui_uses_full_height(self, mocker):
-        from showhn import draw_tui
+        from src import draw_tui
         stdscr = MagicMock()
         # Mock window size 10x40
         stdscr.getmaxyx.return_value = (10, 40)
@@ -299,7 +299,7 @@ class TestTUIDrawing:
         hits = [{"title": f"Story {i}"} for i in range(20)]
         
         # We need to mock _safe_addnstr because it uses curses constants
-        with patch("showhn._safe_addnstr") as mock_addnstr:
+        with patch("src._safe_addnstr") as mock_addnstr:
             draw_tui(stdscr, hits, selected_idx=0, page=0, num_pages=1)
             
             # Header at 0, Footer at height-1 (9)
