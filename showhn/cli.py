@@ -5,9 +5,6 @@ import sys
 import click
 import requests
 
-from .api import fetch_stories, is_github_url
-from .tui import run_tui
-
 
 @click.command()
 @click.option(
@@ -23,15 +20,17 @@ def main(page: int) -> None:
     Results are fetched from hn.algolia.com and displayed in a TUI.
     Use --page / -p to choose the initial page.
     """
+    import showhn as package
+
     try:
-        data = fetch_stories(page=page)
+        data = package.fetch_stories(page=page)
     except requests.RequestException as exc:
         click.echo(f"Error fetching data: {exc}", err=True)
         sys.exit(1)
 
     hits = data.get("hits", [])
     # Filter only GitHub URLs
-    hits = [h for h in hits if is_github_url(h.get("url"))]
+    hits = [h for h in hits if package.is_github_url(h.get("url"))]
     data["hits"] = hits
 
     if not hits:
@@ -39,7 +38,7 @@ def main(page: int) -> None:
         return
 
     try:
-        run_tui(initial_page=page, initial_data=data)
+        package.run_tui(initial_page=page, initial_data=data)
     except requests.RequestException as exc:
         click.echo(f"Error fetching data: {exc}", err=True)
         sys.exit(1)

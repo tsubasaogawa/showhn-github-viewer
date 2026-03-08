@@ -28,6 +28,8 @@ def draw_tui(
     readme_scroll: int = 0,
 ) -> None:
     """Draw the TUI list view."""
+    import showhn as package
+
     stdscr.erase()
     height, width = stdscr.getmaxyx()
 
@@ -40,7 +42,7 @@ def draw_tui(
     ).format(page + 1, num_pages)
     # Pad header to full width with reverse attribute
     header_padded = header.ljust(width - 1)[: width - 1]
-    _safe_addnstr(stdscr, 0, 0, header_padded, width - 1, curses.A_REVERSE)
+    package._safe_addnstr(stdscr, 0, 0, header_padded, width - 1, curses.A_REVERSE)
 
     list_width = width // 2 if readme_lines is not None else width
 
@@ -62,11 +64,15 @@ def draw_tui(
         else:
             line_to_draw = line[: list_width - 1]
 
-        _safe_addnstr(stdscr, row_offset + 1, 0, line_to_draw, list_width - 1, attr)
+        package._safe_addnstr(
+            stdscr, row_offset + 1, 0, line_to_draw, list_width - 1, attr
+        )
 
         if readme_lines is not None:
             # Draw a vertical separator
-            _safe_addnstr(stdscr, row_offset + 1, list_width - 1, "|", 1, curses.A_DIM)
+            package._safe_addnstr(
+                stdscr, row_offset + 1, list_width - 1, "|", 1, curses.A_DIM
+            )
 
     # Draw README pane if open
     if readme_lines is not None:
@@ -75,7 +81,7 @@ def draw_tui(
             line_idx = readme_scroll + row_offset
             if line_idx < len(readme_lines):
                 line_to_draw = readme_lines[line_idx].replace("\t", "    ")[: readme_width - 1]
-                _safe_addnstr(
+                package._safe_addnstr(
                     stdscr, row_offset + 1, list_width, line_to_draw, readme_width - 1
                 )
 
@@ -84,7 +90,9 @@ def draw_tui(
     selected_url = selected_story.get("url") or "(no URL)"
     footer = f"URL: {selected_url}"
     footer_padded = footer.ljust(width - 1)[: width - 1]
-    _safe_addnstr(stdscr, height - 1, 0, footer_padded, width - 1, curses.A_REVERSE)
+    package._safe_addnstr(
+        stdscr, height - 1, 0, footer_padded, width - 1, curses.A_REVERSE
+    )
 
     stdscr.refresh()
 
