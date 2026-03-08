@@ -19,7 +19,7 @@ showhn = "showhn:main"
 showhn-github-viewer = "showhn:main"
 
 [tool.setuptools]
-py-modules = ["showhn"]
+packages = ["showhn"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,127 +1,11 @@
-#!/usr/bin/env python3
-"""Show HN GitHub Viewer - Browse Show HN posts featuring GitHub repos."""
+"""Curses-based TUI for browsing Show HN results."""
 
 import curses
-import sys
-import time
 from typing import Optional
-from urllib.parse import urlparse
 
-import click
-import requests
-
-API_URL = "https://hn.algolia.com/api/v1/search_by_date"
-HITS_PER_PAGE = 20
-
-
-def is_github_url(url: Optional[str]) -> bool:
-    """Check if the URL belongs to github.com."""
-    if not url:
-        return False
-    try:
-        parsed = urlparse(url)
-        return parsed.netloc == "github.com"
-    except Exception:
-        return False
-
-
-def fetch_github_readme(url: str) -> Optional[str]:
-    """Fetch README.md from a GitHub repository."""
-    try:
-        parsed = urlparse(url)
-        path_parts = parsed.path.strip("/").split("/")
-        if len(path_parts) >= 2:
-            owner, repo = path_parts[0], path_parts[1]
-            api_url = f"https://api.github.com/repos/{owner}/{repo}/readme"
-            response = requests.get(
-                api_url,
-                headers={"Accept": "application/vnd.github.v3.raw"},
-                timeout=5
-            )
-            if response.status_code == 200:
-                return response.text
-    except Exception:
-        pass
-    return None
-
-
-def fetch_stories(page: int = 0) -> dict:
-    """Fetch Show HN stories from HN Algolia API."""
-    params = {
-        "query": "show hn github",
-        "tags": "story",
-        "hitsPerPage": HITS_PER_PAGE,
-        "page": page,
-    }
-    response = requests.get(API_URL, params=params, timeout=10)
-    response.raise_for_status()
-    return response.json()
-
-
-def format_time_ago(created_at_i: int) -> str:
-    """Format Unix timestamp as human-readable relative time.
-
-    Uses approximate durations (30-day month, 365-day year) which is
-    acceptable for a display-only "time ago" label.
-    """
-    diff = int(time.time()) - created_at_i
-
-    if diff < 60:
-        return f"{diff} second{'s' if diff != 1 else ''} ago"
-    elif diff < 3600:
-        minutes = diff // 60
-        return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
-    elif diff < 86400:
-        hours = diff // 3600
-        return f"{hours} hour{'s' if hours != 1 else ''} ago"
-    elif diff < 86400 * 30:
-        days = diff // 86400
-        return f"{days} day{'s' if days != 1 else ''} ago"
-    elif diff < 86400 * 365:
-        months = diff // (86400 * 30)
-        return f"{months} month{'s' if months != 1 else ''} ago"
-    else:
-        years = diff // (86400 * 365)
-        return f"{years} year{'s' if years != 1 else ''} ago"
-
-
-def format_story(index: int, story: dict) -> str:
-    """Format a single story for display."""
-    title = story.get("title") or "No title"
-    url = story.get("url") or "(no URL)"
-    points = story.get("points") or 0
-    created_at_i = story.get("created_at_i") or 0
-    time_ago = format_time_ago(created_at_i)
-
-    return (
-        f"{index:>3}. {title}\n"
-        f"     URL:    {url}\n"
-        f"     Points: {points} | {time_ago}\n"
-    )
-
-
-def format_story_line(index: int, story: dict) -> str:
-    """Format a single story as one line for TUI list view."""
-    title = story.get("title") or "No title"
-    points = story.get("points") or 0
-    created_at_i = story.get("created_at_i") or 0
-    time_ago = format_time_ago(created_at_i)
-    return f"{index:>3}. {title} ({points} pts, {time_ago})"
-
-
-def build_page_content(hits: list, page: int, num_pages: int) -> str:
-    """Build the full text content for one page of results."""
-    lines = [
-        f"=== Show HN GitHub Viewer  [Page {page + 1} / {num_pages}] ===\n",
-    ]
-    for i, story in enumerate(hits, start=page * HITS_PER_PAGE + 1):
-        lines.append(format_story(i, story))
-
-    footer = f"--- End of page {page + 1} ---"
-    if page + 1 < num_pages:
-        footer += "  (run with --page to navigate)"
-    lines.append(footer)
-    return "\n".join(lines)
+from .api import fetch_github_readme, fetch_stories, is_github_url
+from .constants import HITS_PER_PAGE
+from .formatting import format_story_line
 
 
 def _safe_addnstr(stdscr, y: int, x: int, text: str, width: int, attr: int = 0) -> None:
@@ -134,7 +18,15 @@ def _safe_addnstr(stdscr, y: int, x: int, text: str, width: int, attr: int = 0) 
         pass
 
 
-def draw_tui(stdscr, hits: list, selected_idx: int, page: int, num_pages: int, readme_lines: Optional[list[str]] = None, readme_scroll: int = 0) -> None:
+def draw_tui(
+    stdscr,
+    hits: list,
+    selected_idx: int,
+    page: int,
+    num_pages: int,
+    readme_lines: Optional[list[str]] = None,
+    readme_scroll: int = 0,
+) -> None:
     """Draw the TUI list view."""
     stdscr.erase()
     height, width = stdscr.getmaxyx()
@@ -183,7 +75,9 @@ def draw_tui(stdscr, hits: list, selected_idx: int, page: int, num_pages: int, r
             line_idx = readme_scroll + row_offset
             if line_idx < len(readme_lines):
                 line_to_draw = readme_lines[line_idx].replace("\t", "    ")[: readme_width - 1]
-                _safe_addnstr(stdscr, row_offset + 1, list_width, line_to_draw, readme_width - 1)
+                _safe_addnstr(
+                    stdscr, row_offset + 1, list_width, line_to_draw, readme_width - 1
+                )
 
     # Footer at the very bottom
     selected_story = hits[selected_idx]
@@ -221,7 +115,15 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
             pass
 
         while True:
-            draw_tui(stdscr, hits, selected_idx, current_page, num_pages, readme_lines, readme_scroll)
+            draw_tui(
+                stdscr,
+                hits,
+                selected_idx,
+                current_page,
+                num_pages,
+                readme_lines,
+                readme_scroll,
+            )
             key = stdscr.getch()
 
             if key in (ord("q"),):
@@ -285,43 +187,3 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                 readme_lines = None
 
     curses.wrapper(_app)
-
-
-@click.command()
-@click.option(
-    "--page",
-    "-p",
-    default=0,
-    show_default=True,
-    help="Page number (0-indexed).",
-)
-def main(page: int) -> None:
-    """Browse Show HN posts that feature GitHub repositories.
-
-    Results are fetched from hn.algolia.com and displayed in a TUI.
-    Use --page / -p to choose the initial page.
-    """
-    try:
-        data = fetch_stories(page=page)
-    except requests.RequestException as exc:
-        click.echo(f"Error fetching data: {exc}", err=True)
-        sys.exit(1)
-
-    hits = data.get("hits", [])
-    # Filter only GitHub URLs
-    hits = [h for h in hits if is_github_url(h.get("url"))]
-    data["hits"] = hits
-
-    if not hits:
-        click.echo("No results found.", err=True)
-        return
-
-    try:
-        run_tui(initial_page=page, initial_data=data)
-    except requests.RequestException as exc:
-        click.echo(f"Error fetching data: {exc}", err=True)
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
