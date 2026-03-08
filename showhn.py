@@ -143,9 +143,9 @@ def draw_tui(stdscr, hits: list, selected_idx: int, page: int, num_pages: int, r
         return
 
     header = (
-        f"Show HN GitHub Viewer [Page {page + 1}/{num_pages}] "
-        "↑/k ↓/j: move  Enter: toggle README  u/d: scroll README  n/p: page  q: quit"
-    )
+        "Show HN GitHub Viewer [P{}/{}] "
+        "↑↓/kj: move/scroll  Enter: toggle  u/d/PgUp/PgDn: scroll  n/p: page  q: quit"
+    ).format(page + 1, num_pages)
     # Pad header to full width with reverse attribute
     header_padded = header.ljust(width - 1)[: width - 1]
     _safe_addnstr(stdscr, 0, 0, header_padded, width - 1, curses.A_REVERSE)
@@ -228,13 +228,19 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                 return
             if key == curses.KEY_RESIZE:
                 continue
-            if key in (curses.KEY_UP, ord("k")) and selected_idx > 0:
-                selected_idx -= 1
-                readme_lines = None
+            if key in (curses.KEY_UP, ord("k")):
+                if readme_lines is not None:
+                    readme_scroll = max(0, readme_scroll - 1)
+                elif selected_idx > 0:
+                    selected_idx -= 1
+                    readme_lines = None
                 continue
-            if key in (curses.KEY_DOWN, ord("j")) and selected_idx < len(hits) - 1:
-                selected_idx += 1
-                readme_lines = None
+            if key in (curses.KEY_DOWN, ord("j")):
+                if readme_lines is not None:
+                    readme_scroll = min(len(readme_lines) - 1, readme_scroll + 1)
+                elif selected_idx < len(hits) - 1:
+                    selected_idx += 1
+                    readme_lines = None
                 continue
             if key in (curses.KEY_ENTER, 10, 13):
                 if readme_lines is None:
@@ -255,6 +261,14 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
             if key == ord("u") and readme_lines is not None:
                 height, _ = stdscr.getmaxyx()
                 readme_scroll = max(0, readme_scroll - (height - 2) // 2)
+                continue
+            if key == curses.KEY_NPAGE and readme_lines is not None:
+                height, _ = stdscr.getmaxyx()
+                readme_scroll = min(len(readme_lines) - 1, readme_scroll + (height - 2))
+                continue
+            if key == curses.KEY_PPAGE and readme_lines is not None:
+                height, _ = stdscr.getmaxyx()
+                readme_scroll = max(0, readme_scroll - (height - 2))
                 continue
             if key in (ord("n"), curses.KEY_RIGHT) and current_page + 1 < num_pages:
                 current_page += 1
