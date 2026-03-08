@@ -9,10 +9,10 @@ displayed in an interactive TUI.
 
 ## Features
 
-- **GitHub Focused**: Automatically filters Show HN posts to show only those with GitHub repository links.
-- **Interactive TUI**: Browse posts with a clean terminal interface.
-- **README Preview**: Press `Enter` to open a vertical split-pane showing the repository's `README.md` directly in your terminal.
-- **Relative Time**: Displays how long ago projects were posted.
+- GitHub Focused: Automatically filters Show HN posts to show only those with GitHub repository links.
+- Interactive TUI: Browse posts with a clean terminal interface.
+- README Preview: Press `Enter` to open a vertical split-pane showing the repository's `README.md` directly in your terminal.
+- Relative Time: Displays how long ago projects were posted.
 
 ---
 
@@ -20,31 +20,14 @@ displayed in an interactive TUI.
 
 ```bash
 # Run directly using uvx (recommended)
-uvx --from . showhn-github-viewer
+uvx --from git+https://github.com/tsubasaogawa/showhn-github-viewer showhn
 ```
 
 Or run the script directly:
 
 ```bash
+# Clone this repo and run the following:
 uv run showhn [OPTIONS]
-```
-
-### Options
-
-```
-Options:
-  -p, --page INTEGER   Initial page number (0-indexed, default: 0)
-  --help               Show this message and exit
-```
-
-### Examples
-
-```bash
-# View the latest 20 Show HN GitHub posts
-showhn
-
-# Jump straight to page 3
-showhn --page 2
 ```
 
 ### Controls
