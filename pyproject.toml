@@ -15,8 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-showhn = "src:main"
-showhn-github-viewer = "src:main"
+main = "src:main"
 
 [tool.setuptools]
 packages = ["src"]
