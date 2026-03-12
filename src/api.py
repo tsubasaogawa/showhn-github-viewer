@@ -39,7 +39,7 @@ def fetch_github_readme(url: str) -> Optional[str]:
     return None
 
 
-def fetch_stories(page: int = 0) -> dict:
+def fetch_stories(page: int = 0, min_points: Optional[int] = None) -> dict:
     """Fetch Show HN stories from HN Algolia API."""
     params = {
         "query": "show hn github",
@@ -47,6 +47,8 @@ def fetch_stories(page: int = 0) -> dict:
         "hitsPerPage": HITS_PER_PAGE,
         "page": page,
     }
+    if min_points is not None:
+        params["numericFilters"] = f"points>={min_points}"
     response = requests.get(API_URL, params=params, timeout=10)
     response.raise_for_status()
     return response.json()
