@@ -5,6 +5,8 @@ repositories.
 Results are fetched from the [HN Algolia API](https://hn.algolia.com/api) and
 displayed in an interactive TUI.
 
+![Image](https://github.com/user-attachments/assets/2a295815-5e27-4464-a959-e2d67eeac946)
+
 ---
 
 ## Features
