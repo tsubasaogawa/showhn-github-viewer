@@ -1,6 +1,7 @@
 """Curses-based TUI for browsing Show HN results."""
 
 import curses
+import webbrowser
 from typing import Optional
 
 from .api import fetch_github_readme, fetch_stories, is_github_url
@@ -38,7 +39,7 @@ def draw_tui(
 
     header = (
         "Show HN GitHub Viewer [P{}/{}] "
-        "↑↓/kj: move/scroll  Enter: toggle  u/d/PgUp/PgDn: scroll  n/p: page  q: quit"
+        "↑↓/kj: move/scroll  Enter: toggle  o: open  u/d/PgUp/PgDn: scroll  n/p: page  q: quit"
     ).format(page + 1, num_pages)
     # Pad header to full width with reverse attribute
     header_padded = header.ljust(width - 1)[: width - 1]
@@ -163,6 +164,11 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                     readme_scroll = 0
                 else:
                     readme_lines = None
+                continue
+            if key == ord("o"):
+                url = hits[selected_idx].get("url")
+                if url:
+                    webbrowser.open(url)
                 continue
             if key == ord("d") and readme_lines is not None:
                 height, _ = stdscr.getmaxyx()
