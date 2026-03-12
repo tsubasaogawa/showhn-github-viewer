@@ -27,6 +27,7 @@ def draw_tui(
     num_pages: int,
     readme_lines: Optional[list[str]] = None,
     readme_scroll: int = 0,
+    min_points: Optional[int] = None,
 ) -> None:
     """Draw the TUI list view."""
     import src as package
@@ -37,10 +38,11 @@ def draw_tui(
     if height < 3 or width < 10:
         return
 
+    filter_text = f" [Pts>={min_points}]" if min_points is not None else ""
     header = (
-        "Show HN GitHub Viewer [P{}/{}] "
-        "↑↓/kj: move/scroll  Enter: toggle  o: open  u/d/PgUp/PgDn: scroll  n/p: page  q: quit"
-    ).format(page + 1, num_pages)
+        f"Show HN GitHub Viewer{filter_text} [P{page + 1}/{num_pages}] "
+        "↑↓/kj: move/scroll  Enter: toggle  o: open  f: filter  u/d: scroll  n/p: page  q: quit"
+    )
     # Pad header to full width with reverse attribute
     header_padded = header.ljust(width - 1)[: width - 1]
     package._safe_addnstr(stdscr, 0, 0, header_padded, width - 1, curses.A_REVERSE)
@@ -110,8 +112,9 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
 
     def _app(stdscr) -> None:
         current_page = initial_page
+        min_points = None
         selected_idx = 0
-        data = initial_data if initial_data is not None else fetch_stories(page=current_page)
+        data = initial_data if initial_data is not None else fetch_stories(page=current_page, min_points=min_points)
         hits, num_pages = _parse(data)
 
         readme_lines = None
@@ -132,6 +135,7 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                 num_pages,
                 readme_lines,
                 readme_scroll,
+                min_points,
             )
             key = stdscr.getch()
 
@@ -170,6 +174,33 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                 if url:
                     webbrowser.open(url)
                 continue
+            if key == ord("f"):
+                height, width = stdscr.getmaxyx()
+                _safe_addnstr(stdscr, height - 1, 0, " " * (width - 1), width - 1, curses.A_NORMAL)
+                _safe_addnstr(stdscr, height - 1, 0, "Min points: ", width - 1, curses.A_NORMAL)
+                try:
+                    curses.echo()
+                    curses.curs_set(1)
+                    s = stdscr.getstr(height - 1, 12, 10)
+                    if s:
+                        min_points = int(s.decode("utf-8").strip())
+                    else:
+                        min_points = None
+                except (ValueError, curses.error):
+                    min_points = None
+                finally:
+                    curses.noecho()
+                    try:
+                        curses.curs_set(0)
+                    except curses.error:
+                        pass
+                
+                current_page = 0
+                data = fetch_stories(page=current_page, min_points=min_points)
+                hits, num_pages = _parse(data)
+                selected_idx = 0
+                readme_lines = None
+                continue
             if key == ord("d") and readme_lines is not None:
                 height, _ = stdscr.getmaxyx()
                 readme_scroll = min(len(readme_lines) - 1, readme_scroll + (height - 2) // 2)
@@ -188,14 +219,14 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                 continue
             if key in (ord("n"), curses.KEY_RIGHT) and current_page + 1 < num_pages:
                 current_page += 1
-                data = fetch_stories(page=current_page)
+                data = fetch_stories(page=current_page, min_points=min_points)
                 hits, num_pages = _parse(data)
                 selected_idx = 0
                 readme_lines = None
                 continue
             if key in (ord("p"), curses.KEY_LEFT) and current_page > 0:
                 current_page -= 1
-                data = fetch_stories(page=current_page)
+                data = fetch_stories(page=current_page, min_points=min_points)
                 hits, num_pages = _parse(data)
                 selected_idx = 0
                 readme_lines = None
