@@ -22,14 +22,14 @@ displayed in an interactive TUI.
 
 ```bash
 # Run directly using uvx (recommended)
-uvx --from git+https://github.com/tsubasaogawa/showhn-github-viewer showhn
+uvx --from git+https://github.com/tsubasaogawa/showhn-github-viewer main
 ```
 
 Or run the script directly:
 
 ```bash
 # Clone this repo and run the following:
-uv run showhn [OPTIONS]
+uv run main [OPTIONS]
 ```
 
 ### Controls
