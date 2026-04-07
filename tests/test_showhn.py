@@ -312,6 +312,45 @@ class TestTUIDrawing:
             # The first item (idx 0) is selected
             selected_call = [c for c in list_calls if c.args[1] == 1][0]
             drawn_text = selected_call.args[3]
-            assert len(drawn_text) == 39  # width - 1
+            assert len(drawn_text) == 40
             assert drawn_text.startswith("  1. Story 0")
             assert drawn_text.endswith(" ")
+
+    def test_draw_tui_fills_split_panes_across_full_area(self):
+        from src import draw_tui
+
+        stdscr = MagicMock()
+        stdscr.getmaxyx.return_value = (6, 20)
+
+        hits = [{"title": "Story 0", "url": "https://github.com/user/repo"}]
+        readme_lines = ["README"]
+
+        with patch("src._safe_addnstr") as mock_addnstr:
+            draw_tui(
+                stdscr,
+                hits,
+                selected_idx=0,
+                page=0,
+                num_pages=1,
+                readme_lines=readme_lines,
+            )
+
+            list_calls = [
+                c for c in mock_addnstr.call_args_list if 1 <= c.args[1] <= 4 and c.args[2] == 0
+            ]
+            divider_calls = [
+                c for c in mock_addnstr.call_args_list if 1 <= c.args[1] <= 4 and c.args[2] == 9
+            ]
+            readme_calls = [
+                c for c in mock_addnstr.call_args_list if 1 <= c.args[1] <= 4 and c.args[2] == 10
+            ]
+
+            assert len(list_calls) == 4
+            assert len(divider_calls) == 4
+            assert len(readme_calls) == 4
+            assert all(c.args[4] == 9 for c in list_calls)
+            assert all(c.args[4] == 1 for c in divider_calls)
+            assert all(c.args[4] == 10 for c in readme_calls)
+            assert divider_calls[0].args[3] == "|"
+            assert readme_calls[0].args[3].startswith("README")
+            assert len(readme_calls[0].args[3]) == 10
