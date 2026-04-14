@@ -32,6 +32,19 @@ def draw_tui(
     """Draw the TUI list view."""
     import src as package
 
+    def fill_row(y: int, x: int, segment_width: int, text: str = "", attr: int = 0) -> None:
+        """Fill a row segment so panes visually occupy the available space."""
+        if segment_width <= 0:
+            return
+        package._safe_addnstr(
+            stdscr,
+            y,
+            x,
+            text.ljust(segment_width)[:segment_width],
+            segment_width,
+            attr,
+        )
+
     stdscr.erase()
     height, width = stdscr.getmaxyx()
 
@@ -43,59 +56,55 @@ def draw_tui(
         f"Show HN GitHub Viewer{filter_text} [P{page + 1}/{num_pages}] "
         "↑↓/kj: move/scroll  Enter: toggle  o: open  f: filter  u/d: scroll  n/p: page  q: quit"
     )
-    # Pad header to full width with reverse attribute
-    header_padded = header.ljust(width - 1)[: width - 1]
-    package._safe_addnstr(stdscr, 0, 0, header_padded, width - 1, curses.A_REVERSE)
+    fill_row(0, 0, width, header, curses.A_REVERSE)
 
-    list_width = width // 2 if readme_lines is not None else width
-
-    # Use all available middle space for the list
     list_height = height - 2
+    list_width = width
+    divider_x = None
+    readme_x = None
+    readme_width = 0
+    if readme_lines is not None:
+        list_width = max(1, (width - 1) // 2)
+        divider_x = list_width
+        readme_x = divider_x + 1
+        readme_width = max(0, width - readme_x)
+
     start_idx = 0
-    if selected_idx >= list_height:
+    if hits and selected_idx >= list_height:
         start_idx = selected_idx - list_height + 1
 
     end_idx = min(len(hits), start_idx + list_height)
-    for row_offset, i in enumerate(range(start_idx, end_idx)):
-        story = hits[i]
-        line = format_story_line(page * HITS_PER_PAGE + i + 1, story)
-        attr = curses.A_REVERSE if i == selected_idx else curses.A_NORMAL
+    for row_offset in range(list_height):
+        y = row_offset + 1
+        hit_idx = start_idx + row_offset
+        list_text = ""
+        attr = curses.A_NORMAL
 
-        # Pad selected line to full width
-        if i == selected_idx:
-            line_to_draw = line.ljust(list_width - 1)[: list_width - 1]
-        else:
-            line_to_draw = line[: list_width - 1]
+        if hit_idx < end_idx:
+            story = hits[hit_idx]
+            list_text = format_story_line(page * HITS_PER_PAGE + hit_idx + 1, story)
+            if hit_idx == selected_idx:
+                attr = curses.A_REVERSE
+        elif not hits and row_offset == list_height // 2:
+            list_text = "No results found."
 
-        package._safe_addnstr(
-            stdscr, row_offset + 1, 0, line_to_draw, list_width - 1, attr
-        )
+        fill_row(y, 0, list_width, list_text, attr)
 
-        if readme_lines is not None:
-            # Draw a vertical separator
-            package._safe_addnstr(
-                stdscr, row_offset + 1, list_width - 1, "|", 1, curses.A_DIM
-            )
-
-    # Draw README pane if open
-    if readme_lines is not None:
-        readme_width = width - list_width
-        for row_offset in range(list_height):
+        if readme_lines is not None and divider_x is not None and readme_x is not None:
+            fill_row(y, divider_x, 1, "|", curses.A_DIM)
+            readme_text = ""
             line_idx = readme_scroll + row_offset
             if line_idx < len(readme_lines):
-                line_to_draw = readme_lines[line_idx].replace("\t", "    ")[: readme_width - 1]
-                package._safe_addnstr(
-                    stdscr, row_offset + 1, list_width, line_to_draw, readme_width - 1
-                )
+                readme_text = readme_lines[line_idx].replace("\t", "    ")
+            fill_row(y, readme_x, readme_width, readme_text)
 
     # Footer at the very bottom
-    selected_story = hits[selected_idx]
-    selected_url = selected_story.get("url") or "(no URL)"
-    footer = f"URL: {selected_url}"
-    footer_padded = footer.ljust(width - 1)[: width - 1]
-    package._safe_addnstr(
-        stdscr, height - 1, 0, footer_padded, width - 1, curses.A_REVERSE
+    selected_story = hits[selected_idx] if hits else None
+    selected_url = (
+        (selected_story.get("url") or "(no URL)") if selected_story else "(no selection)"
     )
+    footer = f"URL: {selected_url}"
+    fill_row(height - 1, 0, width, footer, curses.A_REVERSE)
 
     stdscr.refresh()
 
@@ -158,6 +167,8 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                     readme_lines = None
                 continue
             if key in (curses.KEY_ENTER, 10, 13):
+                if not hits:
+                    continue
                 if readme_lines is None:
                     url = hits[selected_idx].get("url")
                     text = fetch_github_readme(url) if url else None
@@ -170,6 +181,8 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                     readme_lines = None
                 continue
             if key == ord("o"):
+                if not hits:
+                    continue
                 url = hits[selected_idx].get("url")
                 if url:
                     webbrowser.open(url)
@@ -200,6 +213,7 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                 hits, num_pages = _parse(data)
                 selected_idx = 0
                 readme_lines = None
+                readme_scroll = 0
                 continue
             if key == ord("d") and readme_lines is not None:
                 height, _ = stdscr.getmaxyx()
@@ -223,6 +237,7 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                 hits, num_pages = _parse(data)
                 selected_idx = 0
                 readme_lines = None
+                readme_scroll = 0
                 continue
             if key in (ord("p"), curses.KEY_LEFT) and current_page > 0:
                 current_page -= 1
@@ -230,5 +245,6 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                 hits, num_pages = _parse(data)
                 selected_idx = 0
                 readme_lines = None
+                readme_scroll = 0
 
     curses.wrapper(_app)
