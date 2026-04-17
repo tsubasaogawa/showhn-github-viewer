@@ -25,6 +25,9 @@ displayed in an interactive TUI.
 ```bash
 # Run directly using uvx (recommended)
 uvx --from git+https://github.com/tsubasaogawa/showhn-github-viewer main
+
+# Start with a minimum points filter and items-per-page
+uvx --from git+https://github.com/tsubasaogawa/showhn-github-viewer main --filter 100 --num 10
 ```
 
 Or run the script directly:

@@ -16,10 +16,10 @@ uv sync
 
 ```bash
 # Run the TUI
-uv run showhn
+uv run main
 
-# Run starting from a specific page
-uv run showhn --page 1
+# Run with startup filter and item count
+uv run main --filter 10 --num 50
 ```
 
 ## Testing

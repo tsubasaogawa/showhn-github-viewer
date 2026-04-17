@@ -186,7 +186,7 @@ class TestFetchStories:
     def test_correct_query_params(self):
         with patch("src.requests.get") as mock_get:
             mock_get.return_value = self._mock_response({"hits": [], "nbPages": 0})
-            fetch_stories(page=2)
+            fetch_stories(page=2, hits_per_page=30)
             url = mock_get.call_args[0][0]
             _, kwargs = mock_get.call_args
             params = kwargs.get("params") or mock_get.call_args[0][1]
@@ -194,6 +194,7 @@ class TestFetchStories:
             assert params["query"] == "show hn github"
             assert params["page"] == 2
             assert params["tags"] == "story"
+            assert params["hitsPerPage"] == 30
 
     def test_returns_json(self):
         payload = {"hits": [{"title": "test"}], "nbPages": 1}
@@ -230,7 +231,12 @@ class TestCLI:
         ) as mock_tui:
             result = runner.invoke(main, [])
         assert result.exit_code == 0
-        mock_tui.assert_called_once_with(initial_page=0, initial_data=fake_data)
+        mock_tui.assert_called_once_with(
+            initial_page=0,
+            initial_data=fake_data,
+            initial_min_points=None,
+            hits_per_page=20,
+        )
 
     def test_page_option(self):
         runner = CliRunner()
@@ -239,8 +245,37 @@ class TestCLI:
             "src.run_tui"
         ) as mock_tui:
             runner.invoke(main, ["--page", "3"])
-            mock_fetch.assert_called_once_with(page=3)
-            mock_tui.assert_called_once_with(initial_page=3, initial_data=fake_data)
+            mock_fetch.assert_called_once_with(
+                page=3,
+                min_points=None,
+                hits_per_page=20,
+            )
+            mock_tui.assert_called_once_with(
+                initial_page=3,
+                initial_data=fake_data,
+                initial_min_points=None,
+                hits_per_page=20,
+            )
+
+    def test_filter_and_num_options(self):
+        runner = CliRunner()
+        fake_data = self._fake_data()
+        with patch("src.fetch_stories", return_value=fake_data) as mock_fetch, patch(
+            "src.run_tui"
+        ) as mock_tui:
+            result = runner.invoke(main, ["--filter", "100", "--num", "5"])
+        assert result.exit_code == 0
+        mock_fetch.assert_called_once_with(
+            page=0,
+            min_points=100,
+            hits_per_page=5,
+        )
+        mock_tui.assert_called_once_with(
+            initial_page=0,
+            initial_data=fake_data,
+            initial_min_points=100,
+            hits_per_page=5,
+        )
 
     def test_no_results(self):
         runner = CliRunner()
