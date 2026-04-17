@@ -28,6 +28,7 @@ def draw_tui(
     readme_lines: Optional[list[str]] = None,
     readme_scroll: int = 0,
     min_points: Optional[int] = None,
+    hits_per_page: int = HITS_PER_PAGE,
 ) -> None:
     """Draw the TUI list view."""
     import src as package
@@ -82,7 +83,7 @@ def draw_tui(
 
         if hit_idx < end_idx:
             story = hits[hit_idx]
-            list_text = format_story_line(page * HITS_PER_PAGE + hit_idx + 1, story)
+            list_text = format_story_line(page * hits_per_page + hit_idx + 1, story)
             if hit_idx == selected_idx:
                 attr = curses.A_REVERSE
         elif not hits and row_offset == list_height // 2:
@@ -109,7 +110,12 @@ def draw_tui(
     stdscr.refresh()
 
 
-def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
+def run_tui(
+    initial_page: int = 0,
+    initial_data: Optional[dict] = None,
+    initial_min_points: Optional[int] = None,
+    hits_per_page: int = HITS_PER_PAGE,
+) -> None:
     """Run interactive TUI for browsing Show HN results."""
 
     def _parse(data: dict) -> tuple[list, int]:
@@ -121,9 +127,17 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
 
     def _app(stdscr) -> None:
         current_page = initial_page
-        min_points = None
+        min_points = initial_min_points
         selected_idx = 0
-        data = initial_data if initial_data is not None else fetch_stories(page=current_page, min_points=min_points)
+        data = (
+            initial_data
+            if initial_data is not None
+            else fetch_stories(
+                page=current_page,
+                min_points=min_points,
+                hits_per_page=hits_per_page,
+            )
+        )
         hits, num_pages = _parse(data)
 
         readme_lines = None
@@ -145,6 +159,7 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                 readme_lines,
                 readme_scroll,
                 min_points,
+                hits_per_page,
             )
             key = stdscr.getch()
 
@@ -209,7 +224,11 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                         pass
                 
                 current_page = 0
-                data = fetch_stories(page=current_page, min_points=min_points)
+                data = fetch_stories(
+                    page=current_page,
+                    min_points=min_points,
+                    hits_per_page=hits_per_page,
+                )
                 hits, num_pages = _parse(data)
                 selected_idx = 0
                 readme_lines = None
@@ -233,7 +252,11 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                 continue
             if key in (ord("n"), curses.KEY_RIGHT) and current_page + 1 < num_pages:
                 current_page += 1
-                data = fetch_stories(page=current_page, min_points=min_points)
+                data = fetch_stories(
+                    page=current_page,
+                    min_points=min_points,
+                    hits_per_page=hits_per_page,
+                )
                 hits, num_pages = _parse(data)
                 selected_idx = 0
                 readme_lines = None
@@ -241,7 +264,11 @@ def run_tui(initial_page: int = 0, initial_data: Optional[dict] = None) -> None:
                 continue
             if key in (ord("p"), curses.KEY_LEFT) and current_page > 0:
                 current_page -= 1
-                data = fetch_stories(page=current_page, min_points=min_points)
+                data = fetch_stories(
+                    page=current_page,
+                    min_points=min_points,
+                    hits_per_page=hits_per_page,
+                )
                 hits, num_pages = _parse(data)
                 selected_idx = 0
                 readme_lines = None

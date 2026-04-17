@@ -39,12 +39,16 @@ def fetch_github_readme(url: str) -> Optional[str]:
     return None
 
 
-def fetch_stories(page: int = 0, min_points: Optional[int] = None) -> dict:
+def fetch_stories(
+    page: int = 0,
+    min_points: Optional[int] = None,
+    hits_per_page: int = HITS_PER_PAGE,
+) -> dict:
     """Fetch Show HN stories from HN Algolia API."""
     params = {
         "query": "show hn github",
         "tags": "story",
-        "hitsPerPage": HITS_PER_PAGE,
+        "hitsPerPage": hits_per_page,
         "page": page,
     }
     if min_points is not None:

@@ -20,6 +20,9 @@ uv run showhn
 
 # Run starting from a specific page
 uv run showhn --page 1
+
+# Run with startup filter and item count
+uv run showhn --filter 100 --num 10
 ```
 
 ## Testing
